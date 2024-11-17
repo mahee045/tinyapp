@@ -10,6 +10,19 @@ app.get("/urls", (req, res) => {
   res.render("urls_index", templateVars);
 });
 
+//route url show handler
+app.get("/urls/:id", (req, res) => {
+  const id = req.params.id; // Extract the ID from the URL
+  const longURL = urlDatabase[id]; // Use the ID to fetch the long URL from the database
+
+  if (!longURL) {
+    return res.status(404).send("URL not found!");
+  }
+
+  const templateVars = { id, longURL }; 
+  res.render("urls_show", templateVars); 
+});
+
 const urlDatabase = {
   b2xVn2: "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com",

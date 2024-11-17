@@ -4,6 +4,12 @@ const PORT = 8080; // default port 8080
 //setting ejs as engine viewer
 app.set("view engine", "ejs") 
 
+//new route handler 
+app.get("/urls", (req, res) => {
+  const templateVars = { urls: urlDatabase };
+  res.render("urls_index", templateVars);
+});
+
 const urlDatabase = {
   b2xVn2: "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com",

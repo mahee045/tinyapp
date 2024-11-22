@@ -56,6 +56,13 @@ app.post("/urls", (req, res) => {
   
 });
 
+// POST route to delete a URL resource
+app.post("/urls/:id/delete", (req, res) => {
+  const id = req.params.id; // 
+  delete urlDatabase[id]; // 
+  res.redirect("/urls"); // 
+});
+
 const urlDatabase = {
   b2xVn2: "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com",

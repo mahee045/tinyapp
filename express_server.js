@@ -4,6 +4,22 @@ const PORT = 8080; // default port 8080
 //setting ejs as engine viewer
 app.set("view engine", "ejs") 
 
+  ///Random String Generator for shorter URL
+function generateRandomString() {
+  return Math.random().toString(36).substring(2, 8);
+}
+///url encoded
+app.use(express.urlencoded({ extended: true }));
+
+///route definition 
+app.get("/urls/new", (req, res) => {
+  res.render("urls_new");
+});
+
+app.get("/urls/new", (req, res) => {
+  res.render("urls_new");
+});
+
 //new route handler 
 app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase };
@@ -21,6 +37,16 @@ app.get("/urls/:id", (req, res) => {
 
   const templateVars = { id, longURL }; 
   res.render("urls_show", templateVars); 
+});
+
+//defining log request body with dummy response
+app.post("/urls", (req, res) => {
+  const longURL = req.body.longURL; 
+  const shortURL = generateRandomString(); // Call the function to get a random string
+  urlDatabase[shortURL] = longURL; // Store the mapping in the database
+  console.log(`Added: ${shortURL} -> ${longURL}`); 
+
+  res.send("Ok"); // Respond with 'Ok' (we will replace this)
 });
 
 const urlDatabase = {
@@ -43,3 +69,5 @@ app.get("/urls.json", (req, res) => {
 app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
+
+//

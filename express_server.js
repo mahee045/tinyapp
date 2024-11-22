@@ -46,7 +46,7 @@ app.get("/urls/:id", (req, res) => {
   res.render("urls_show", templateVars);
 });
 
-//defining log request body with dummy response
+//POST route to create short url
 app.post("/urls", (req, res) => {
   const longURL = req.body.longURL; 
   const shortURL = generateRandomString(); // Call the function to get a random string
@@ -61,6 +61,18 @@ app.post("/urls/:id/delete", (req, res) => {
   const id = req.params.id; // 
   delete urlDatabase[id]; // 
   res.redirect("/urls"); // 
+});
+
+// POST route to update a long URL
+app.post("/urls/:id", (req, res) => {
+  const id = req.params.id;
+  const newLongURL = req.body.longURL;
+  if (!urlDatabase[id]) {
+    return res.status(404).send("Short URL not found!");
+  }
+  urlDatabase[id] = newLongURL;
+  console.log(`Updated: ${id} -> ${newLongURL}`);
+  res.redirect("/urls");
 });
 
 const urlDatabase = {

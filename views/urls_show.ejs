@@ -20,6 +20,24 @@
         <p class="card-text">
           Short URL ID: <a href="/u/<%= id %>"><%= id %></a>
         </p>
+
+        <!-- Form to update the long URL -->
+        <form method="POST" action="/urls/<%= id %>">
+          <div class="form-group">
+            <label for="longURL">Update Long URL:</label>
+            <input
+              type="text"
+              class="form-control"
+              id="longURL"
+              name="longURL"
+              value="<%= longURL %>"
+              required
+              style="margin-bottom: 1em;"
+            />
+            <button type="submit" class="btn btn-primary">Update URL</button>
+          </div>
+        </form>
+
         <a href="#" class="btn btn-primary">Create a New URL</a>
       </div>
       <div class="card-footer text-muted">Manage your URLs efficiently</div>

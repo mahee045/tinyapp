@@ -95,6 +95,12 @@ app.post("/login", (req, res) => {
   res.redirect("/urls"); 
 });
 
+/// POST route logout 
+app.post("/logout", (req, res) => {
+  res.clearCookie("username"); 
+  res.redirect("/urls"); 
+});
+
 const urlDatabase = {
   b2xVn2: "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com",

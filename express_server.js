@@ -58,6 +58,14 @@ app.get("/urls/:id", (req, res) => {
   res.render("urls_show", templateVars);
 });
 
+///GET route register
+app.get("/register", (req, res) => {
+  const templateVars = {
+    username: req.cookies["username"] || null // Include the username if applicable
+  };
+  res.render("register", templateVars); // Render the register template
+}); 
+
 //POST route to create short url
 app.post("/urls", (req, res) => {
   const longURL = req.body.longURL; 
@@ -100,6 +108,7 @@ app.post("/logout", (req, res) => {
   res.clearCookie("username"); 
   res.redirect("/urls"); 
 });
+
 
 const urlDatabase = {
   b2xVn2: "http://www.lighthouselabs.ca",

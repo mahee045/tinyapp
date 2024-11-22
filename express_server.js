@@ -75,6 +75,16 @@ app.post("/urls/:id", (req, res) => {
   res.redirect("/urls");
 });
 
+const cookieParser = require("cookie-parser"); // Import the cookie-parser middleware
+app.use(cookieParser()); // Use the middleware to parse cookies
+
+// POST route to handle login and set a username cookie
+app.post("/login", (req, res) => {
+  const username = req.body.username; 
+  res.cookie("username", username); 
+  res.redirect("/urls"); 
+});
+
 const urlDatabase = {
   b2xVn2: "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com",

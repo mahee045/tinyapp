@@ -1,6 +1,17 @@
 <header>
   <nav class="navbar navbar-expand-md navbar-dark bg-success">
     <a class="navbar-brand" href="/urls">TinyApp</a>
+    <!-- Login Form -->
+    <form method="POST" action="/login" class="form-inline">
+      <input
+        type="text"
+        name="username"
+        class="form-control mr-sm-2"
+        placeholder="Enter username"
+        required
+      />
+      <button type="submit" class="btn btn-outline-success">Login</button>
+    </form>
     <button
       class="navbar-toggler"
       type="button"

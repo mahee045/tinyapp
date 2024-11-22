@@ -16,10 +16,6 @@ app.get("/urls/new", (req, res) => {
   res.render("urls_new");
 });
 
-app.get("/urls/new", (req, res) => {
-  res.render("urls_new");
-});
-
 //new route handler 
 app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase };
@@ -27,26 +23,37 @@ app.get("/urls", (req, res) => {
 });
 
 //route url show handler
-app.get("/urls/:id", (req, res) => {
+app.get("/u/:id", (req, res) => {
   const id = req.params.id; // Extract the ID from the URL
-  const longURL = urlDatabase[id]; // Use the ID to fetch the long URL from the database
+  const longURL = urlDatabase[id]; // THE LONG url will equal short URL
 
   if (!longURL) {
     return res.status(404).send("URL not found!");
   }
 
-  const templateVars = { id, longURL }; 
-  res.render("urls_show", templateVars); 
+  res.redirect(longURL); // Redirecting long URL
+});
+///route to display details for a specfic short url
+app.get("/urls/:id", (req, res) => {
+  const id = req.params.id;
+  const longURL = urlDatabase[id];
+
+  if (!longURL) {
+    return res.status(404).send("URL not found!");
+  }
+
+  const templateVars = { id, longURL };
+  res.render("urls_show", templateVars);
 });
 
 //defining log request body with dummy response
 app.post("/urls", (req, res) => {
   const longURL = req.body.longURL; 
   const shortURL = generateRandomString(); // Call the function to get a random string
-  urlDatabase[shortURL] = longURL; // Store the mapping in the database
+  urlDatabase[shortURL] = longURL; // Store the id-longURL key-value to urlDatabase
   console.log(`Added: ${shortURL} -> ${longURL}`); 
-
-  res.send("Ok"); // Respond with 'Ok' (we will replace this)
+  res.redirect(`/urls/${shortURL}`); // Redirect to the details page for the new short URL
+  
 });
 
 const urlDatabase = {

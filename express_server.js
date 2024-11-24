@@ -1,5 +1,6 @@
 const express = require("express");
 const app = express();
+const bcrypt = require("bcryptjs");
 const PORT = 8080; // default port 8080
 //setting ejs as engine viewer
 app.set("view engine", "ejs") 
@@ -126,7 +127,8 @@ app.post("/login", (req, res) => {
     return res.status(403).send("Error: Email not found.");
   }
 
-  if (user.password !== password) {
+   // Check if the password matches the stored hashed password
+   if (!bcrypt.compareSync(password, user.password)) {
     return res.status(403).send("Error: Incorrect password.");
   }
 
@@ -162,9 +164,12 @@ app.post("/register", (req, res) => {
     return res.status(400).send("Error: Email already registered.");
   }
 
+  // Generate a hashed password
+  const hashedPassword = bcrypt.hashSync(password, 10); 
+
   // Generate a new user ID and add user to the database
   const id = generateRandomString();
-  users[id] = { id, email, password };
+  users[id] = { id, email, password: hashedPassword };
 
    // Log the updated users object for debugging
    console.log("Updated users object:", users);

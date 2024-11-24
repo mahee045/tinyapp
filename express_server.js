@@ -5,6 +5,10 @@ const PORT = 8080; // default port 8080
 //setting ejs as engine viewer
 app.set("view engine", "ejs") 
 
+///helper function
+const { getUserByEmail } = require("./helpers");
+
+
 // cookie session
 const cookieSession = require("cookie-session");
 
@@ -29,16 +33,6 @@ const users = {
     password: "dishwasher-funk",
   },
 };
-
-// Find a user by their email
-function findUserByEmail(email) {
-  for (const userID in users) {
-    if (users[userID].email === email) {
-      return users[userID];
-    }
-  }
-  return null; // Return null if no user is found
-}
 
   ///Random String Generator for shorter URL
 function generateRandomString() {
@@ -129,7 +123,7 @@ app.get("/login", (req, res) => {
 // POST route to handle login and set a user cookie
 app.post("/login", (req, res) => {
   const { email, password } = req.body;
-  const user = findUserByEmail(email);
+  const user = getUserByEmail(email, users);
 
   if (!user) {
     return res.status(403).send("Error: Email not found.");
@@ -168,7 +162,7 @@ app.post("/register", (req, res) => {
   }
 
   // Check for duplicate email
-  if (findUserByEmail(email)) {
+  if (getUserByEmail(email, users)) {
     return res.status(400).send("Error: Email already registered.");
   }
 

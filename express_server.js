@@ -5,8 +5,16 @@ const PORT = 8080; // default port 8080
 //setting ejs as engine viewer
 app.set("view engine", "ejs") 
 
-const cookieParser = require("cookie-parser"); // Import the cookie-parser middleware
-app.use(cookieParser()); // Use the middleware to parse cookies
+// cookie session
+const cookieSession = require("cookie-session");
+
+app.use(
+  cookieSession({
+    name: "session",
+    keys: ["your-secure-key1", "your-secure-key2"], // Use secure, random keys
+    maxAge: 24 * 60 * 60 * 1000, // Optional: Session expires after 24 hours
+  })
+);
 
 ///object stores and access the users in the app
 const users = {
@@ -41,7 +49,7 @@ app.use(express.urlencoded({ extended: true }));
 
 ///route definition 
 app.get("/urls/new", (req, res) => {
-  const userID = req.cookies["user_id"];
+  const userID = req.session.user_id;
   const user = users[userID];
   const templateVars = { user };
   res.render("urls_new", templateVars);
@@ -49,17 +57,17 @@ app.get("/urls/new", (req, res) => {
 
 //new route handler and user
 app.get("/urls", (req, res) => {
-  const userID = req.cookies["user_id"];
+  const userID = req.session.user_id;
   const user = users[userID];
   const templateVars = {
-    user,
+    user: user || null,
     urls: urlDatabase,
   };
   res.render("urls_index", templateVars);
 });
 //route url show handler
 app.get("/urls/:id", (req, res) => {
-  const userID = req.cookies["user_id"];
+  const userID = req.session.user_id;
   const user = users[userID];
   const id = req.params.id;
   const longURL = urlDatabase[id];
@@ -93,7 +101,7 @@ app.post("/urls/:id/delete", (req, res) => {
 
 // POST route to update a long URL
 app.get("/urls/:id", (req, res) => {
-  const userID = req.cookies["user_id"];
+  const userID = req.session.user_id;
   const user = users[userID];
   const id = req.params.id;
   const longURL = urlDatabase[id];
@@ -112,7 +120,7 @@ app.get("/urls/:id", (req, res) => {
 
 /// GET route to handle login
 app.get("/login", (req, res) => {
-  const userID = req.cookies["user_id"]; 
+  const userID = req.session.user_id;
   const user = users[userID]; 
   const templateVars = { user }; 
   res.render("login", templateVars); 
@@ -132,19 +140,19 @@ app.post("/login", (req, res) => {
     return res.status(403).send("Error: Incorrect password.");
   }
 
-  res.cookie("user_id", user.id);
+  req.session.user_id = user.id;
   res.redirect("/urls");
 });
 
 /// POST route logout 
 app.post("/logout", (req, res) => {
-  res.clearCookie("user_id");
+  req.session = null; 
   res.redirect("/login");
 });
 
 // Registration page
 app.get("/register", (req, res) => {
-  const userID = req.cookies["user_id"];
+  const userID = req.session.user_id;
   const user = users[userID];
   const templateVars = { user };
   res.render("register", templateVars);
@@ -175,7 +183,7 @@ app.post("/register", (req, res) => {
    console.log("Updated users object:", users);
 
   // Set user_id cookie and redirect
-  res.cookie("user_id", id);
+  req.session.user_id = id;
   res.redirect("/urls");
 });
 

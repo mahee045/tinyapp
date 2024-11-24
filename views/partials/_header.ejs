@@ -3,9 +3,9 @@
     <a class="navbar-brand" href="/urls">TinyApp</a>
 
     <!-- Conditional Display: Username or Login Form -->
-    <% if (username) { %>
+    <% if (user) { %>
       <!-- Display username and logout button -->
-      <span class="navbar-text">Logged in as: <%= username %></span>
+      <span class="navbar-text">Logged in as: <%= user.email %></span>
       <form method="POST" action="/logout" class="form-inline" style="display: inline;">
         <button type="submit" class="btn btn-outline-danger btn-sm">Logout</button>
       </form>
@@ -16,7 +16,7 @@
           type="text"
           name="username"
           class="form-control mr-sm-2"
-          placeholder="Enter username"
+          placeholder="Enter email"
           required
         />
         <button type="submit" class="btn btn-outline-success btn-sm">Login</button>

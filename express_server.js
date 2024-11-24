@@ -109,6 +109,13 @@ app.get("/urls/:id", (req, res) => {
   res.render("urls_show", templateVars);
 });
 
+/// GET route to handle login
+app.get("/login", (req, res) => {
+  const userID = req.cookies["user_id"]; 
+  const user = users[userID]; 
+  const templateVars = { user }; 
+  res.render("login", templateVars); 
+});
 
 // POST route to handle login and set a username cookie
 app.post("/login", (req, res) => {

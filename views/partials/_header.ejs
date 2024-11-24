@@ -2,26 +2,19 @@
   <nav class="navbar navbar-expand-md navbar-dark bg-success">
     <a class="navbar-brand" href="/urls">TinyApp</a>
 
-    <!-- Conditional Display: Username or Login Form -->
-    <% if (user) { %>
-      <!-- Display username and logout button -->
-      <span class="navbar-text">Logged in as: <%= user.email %></span>
-      <form method="POST" action="/logout" class="form-inline" style="display: inline;">
-        <button type="submit" class="btn btn-outline-danger btn-sm">Logout</button>
-      </form>
-    <% } else { %>
-      <!-- Display login form -->
-      <form method="POST" action="/login" class="form-inline">
-        <input
-          type="text"
-          name="username"
-          class="form-control mr-sm-2"
-          placeholder="Enter email"
-          required
-        />
-        <button type="submit" class="btn btn-outline-success btn-sm">Login</button>
-      </form>
-    <% } %>
+    <div class="navbar-nav ml-auto">
+      <% if (user) { %>
+        <!-- Display email and logout button for logged-in users -->
+        <span class="navbar-text">Logged in as: <%= user.email %></span>
+        <form method="POST" action="/logout" class="form-inline" style="display: inline;">
+          <button type="submit" class="btn btn-outline-danger btn-sm ml-2">Logout</button>
+        </form>
+      <% } else { %>
+        <!-- Display Register and Login links for guests -->
+        <a href="/register" class="btn btn-outline-light btn-sm mr-2">Register</a>
+        <a href="/login" class="btn btn-outline-light btn-sm">Login</a>
+      <% } %>
+    </div>
 
     <button
       class="navbar-toggler"

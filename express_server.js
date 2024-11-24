@@ -46,7 +46,7 @@ app.get("/urls/new", (req, res) => {
   res.render("urls_new", templateVars);
 });
 
-//new route handler and username
+//new route handler and user
 app.get("/urls", (req, res) => {
   const userID = req.cookies["user_id"];
   const user = users[userID];
@@ -117,7 +117,7 @@ app.get("/login", (req, res) => {
   res.render("login", templateVars); 
 });
 
-// POST route to handle login and set a username cookie
+// POST route to handle login and set a user cookie
 app.post("/login", (req, res) => {
   const { email, password } = req.body;
   const user = findUserByEmail(email);
@@ -137,7 +137,7 @@ app.post("/login", (req, res) => {
 /// POST route logout 
 app.post("/logout", (req, res) => {
   res.clearCookie("user_id");
-  res.redirect("/urls");
+  res.redirect("/login");
 });
 
 // Registration page

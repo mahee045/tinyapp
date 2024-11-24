@@ -116,7 +116,7 @@ app.post("/login", (req, res) => {
   const user = findUserByEmail(email);
 
   if (!user) {
-    return res.status(403).send("Error: User not found.");
+    return res.status(403).send("Error: Email not found.");
   }
 
   if (user.password !== password) {
@@ -158,6 +158,9 @@ app.post("/register", (req, res) => {
   // Generate a new user ID and add user to the database
   const id = generateRandomString();
   users[id] = { id, email, password };
+
+   // Log the updated users object for debugging
+   console.log("Updated users object:", users);
 
   // Set user_id cookie and redirect
   res.cookie("user_id", id);

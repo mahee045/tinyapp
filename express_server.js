@@ -44,6 +44,9 @@ app.use(express.urlencoded({ extended: true }));
 ///route definition 
 app.get("/urls/new", (req, res) => {
   const userID = req.session.user_id;
+  if (!userID) {
+    return res.redirect("/login"); // Redirect non-logged-in users to login
+  }
   const user = users[userID];
   const templateVars = { user };
   res.render("urls_new", templateVars);
@@ -78,11 +81,53 @@ app.get("/urls/:id", (req, res) => {
   res.render("urls_show", templateVars);
 });
 
-//POST route to create short url
+///get route for error if short url does not exist
+app.get("/u/:id", (req, res) => {
+  const id = req.params.id;
+
+  // Iterate through the urlDatabase to find the long URL
+  for (const userID in urlDatabase) {
+    if (urlDatabase[userID][id]) {
+      return res.redirect(urlDatabase[userID][id]);
+    }
+  }
+
+  // If the short URL ID is not found, return an error
+  res.status(404).send(`
+    <html>
+      <head>
+        <title>Short URL Not Found</title>
+      </head>
+      <body>
+        <h1>Error 404: Short URL Not Found</h1>
+        <p>The short URL ID you provided does not exist in our database.</p>
+        <a href="/urls">Go Back to TinyApp</a>
+      </body>
+    </html>
+  `);
+});
+
+
+//POST route to create short url ONLY FOR LOGGED IN USERS
 app.post("/urls", (req, res) => {
+  const userID = req.session.user_id;
+  if (!userID) {
+    return res
+      .status(403)
+      .send(
+        "Error: You must be logged in to create short URLs. Please log in first."
+      );
+  }
+
   const longURL = req.body.longURL;
   const shortURL = generateRandomString();
-  urlDatabase[shortURL] = longURL;
+
+  // Associate the new URL with the logged-in user
+  if (!urlDatabase[userID]) {
+    urlDatabase[userID] = {};
+  }
+  urlDatabase[userID][shortURL] = longURL;
+
   res.redirect(`/urls/${shortURL}`);
 });
 
@@ -93,28 +138,12 @@ app.post("/urls/:id/delete", (req, res) => {
   res.redirect("/urls");
 });
 
-// POST route to update a long URL
-app.get("/urls/:id", (req, res) => {
-  const userID = req.session.user_id;
-  const user = users[userID];
-  const id = req.params.id;
-  const longURL = urlDatabase[id];
-
-  if (!longURL) {
-    return res.status(404).send("URL not found!");
-  }
-
-  const templateVars = {
-    user,
-    id,
-    longURL,
-  };
-  res.render("urls_show", templateVars);
-});
-
 /// GET route to handle login
 app.get("/login", (req, res) => {
   const userID = req.session.user_id;
+  if (userID) {
+    return res.redirect("/urls"); // Redirect logged-in users to /urls
+  }
   const user = users[userID]; 
   const templateVars = { user }; 
   res.render("login", templateVars); 
@@ -147,6 +176,9 @@ app.post("/logout", (req, res) => {
 // Registration page
 app.get("/register", (req, res) => {
   const userID = req.session.user_id;
+  if (userID) {
+    return res.redirect("/urls"); // Redirect logged-in users to /urls
+  }
   const user = users[userID];
   const templateVars = { user };
   res.render("register", templateVars);
@@ -166,15 +198,13 @@ app.post("/register", (req, res) => {
     return res.status(400).send("Error: Email already registered.");
   }
 
-  // Generate a hashed password
-  const hashedPassword = bcrypt.hashSync(password, 10); 
+   // Generate a hashed password
+   const hashedPassword = bcrypt.hashSync(password, 12); 
 
   // Generate a new user ID and add user to the database
   const id = generateRandomString();
   users[id] = { id, email, password: hashedPassword };
 
-   // Log the updated users object for debugging
-   console.log("Updated users object:", users);
 
   // Set user_id cookie and redirect
   req.session.user_id = id;
@@ -183,8 +213,10 @@ app.post("/register", (req, res) => {
 
 
 const urlDatabase = {
-  b2xVn2: "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com",
+  userRandomID: {
+    b2xVn2: "http://www.lighthouselabs.ca",
+    "9sm5xK": "http://www.google.com",
+  },
 };
 
 app.get("/", (req, res) => {

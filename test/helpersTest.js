@@ -25,7 +25,6 @@ describe('getUserByEmail', function() {
   });
 });
 
-
 // Non-existent email from database 
   it('should return null if the email does not exist in the database', function() {
     const user = getUserByEmail("nonexistent@example.com", testUsers);

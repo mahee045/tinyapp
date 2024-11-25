@@ -8,4 +8,17 @@ const getUserByEmail = function (email, database) {
   return null; // Return null if no user is found
 };
 
-module.exports = { getUserByEmail };
+
+///url filtering\
+const urlsForUser = (id, urlDatabase) => {
+  const userURLs = {};
+  for (const shortURL in urlDatabase) {
+    if (urlDatabase[shortURL].userID === id) {
+      userURLs[shortURL] = urlDatabase[shortURL];
+    }
+  }
+  return userURLs;
+};
+
+module.exports = { getUserByEmail, urlsForUser };
+

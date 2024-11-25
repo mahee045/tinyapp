@@ -7,7 +7,7 @@ app.set("view engine", "ejs")
 
 ///helper function
 const { getUserByEmail } = require("./helpers");
-
+const { urlsForUser } = require("./helpers");
 
 // cookie session
 const cookieSession = require("cookie-session");
@@ -55,78 +55,102 @@ app.get("/urls/new", (req, res) => {
 //new route handler and user
 app.get("/urls", (req, res) => {
   const userID = req.session.user_id;
-  const user = users[userID];
-  const templateVars = {
-    user: user || null,
-    urls: urlDatabase,
-  };
-  res.render("urls_index", templateVars);
-});
-//route url show handler
-app.get("/urls/:id", (req, res) => {
-  const userID = req.session.user_id;
-  const user = users[userID];
-  const id = req.params.id;
-  const longURL = urlDatabase[id];
 
-  if (!longURL) {
-    return res.status(404).send("URL not found!");
+  if (!userID) {
+    return res.status(401).send("Please log in or register to view URLs.");
   }
+
+  const user = users[userID];
+  const userURLs = urlsForUser(userID, urlDatabase);
 
   const templateVars = {
     user,
-    id,
-    longURL,
+    urls: userURLs,
   };
+
+  res.render("urls_index", templateVars);
+});
+
+//route url show handler
+app.post("/urls/:id", (req, res) => {
+  const id = req.params.id;
+  const userID = req.session.user_id;
+
+  if (!urlDatabase[id]) {
+    return res.status(404).send("Error: URL not found.");
+  }
+
+  if (!userID) {
+    return res.status(403).send("Error: You must log in to edit this URL.");
+  }
+
+  if (urlDatabase[id].userID !== userID) {
+    return res
+      .status(403)
+      .send("Error: You do not have permission to edit this URL.");
+  }
+
+  urlDatabase[id].longURL = req.body.longURL;
+  res.redirect("/urls");
+});
+
+//viewing permission, and ownership
+app.get("/urls/:id", (req, res) => {
+  const userID = req.session.user_id;
+
+  if (!userID) {
+    return res.status(401).send("Error: You must log in to view this page.");
+  }
+
+  const url = urlDatabase[req.params.id];
+
+  if (!url) {
+    return res.status(404).send("Error: URL not found.");
+  }
+
+  if (url.userID !== userID) {
+    return res
+      .status(403)
+      .send("Error: You do not have permission to view this URL.");
+  }
+
+  const user = users[userID];
+  const templateVars = {
+    user,
+    id: req.params.id,
+    longURL: url.longURL,
+  };
+
   res.render("urls_show", templateVars);
 });
+
+
 
 ///get route for error if short url does not exist
 app.get("/u/:id", (req, res) => {
   const id = req.params.id;
+  const url = urlDatabase[id];
 
-  // Iterate through the urlDatabase to find the long URL
-  for (const userID in urlDatabase) {
-    if (urlDatabase[userID][id]) {
-      return res.redirect(urlDatabase[userID][id]);
-    }
+  if (!url) {
+    return res.status(404).send("Error: Short URL not found.");
   }
 
-  // If the short URL ID is not found, return an error
-  res.status(404).send(`
-    <html>
-      <head>
-        <title>Short URL Not Found</title>
-      </head>
-      <body>
-        <h1>Error 404: Short URL Not Found</h1>
-        <p>The short URL ID you provided does not exist in our database.</p>
-        <a href="/urls">Go Back to TinyApp</a>
-      </body>
-    </html>
-  `);
+  res.redirect(url.longURL);
 });
-
 
 //POST route to create short url ONLY FOR LOGGED IN USERS
 app.post("/urls", (req, res) => {
   const userID = req.session.user_id;
+
   if (!userID) {
-    return res
-      .status(403)
-      .send(
-        "Error: You must be logged in to create short URLs. Please log in first."
-      );
+    return res.status(403).send("Error: You must be logged in to create short URLs.");
   }
 
-  const longURL = req.body.longURL;
   const shortURL = generateRandomString();
+  const longURL = req.body.longURL;
 
-  // Associate the new URL with the logged-in user
-  if (!urlDatabase[userID]) {
-    urlDatabase[userID] = {};
-  }
-  urlDatabase[userID][shortURL] = longURL;
+  // Save the new URL with associated userID
+  urlDatabase[shortURL] = { longURL, userID };
 
   res.redirect(`/urls/${shortURL}`);
 });
@@ -134,38 +158,61 @@ app.post("/urls", (req, res) => {
 // POST route to delete a URL resource
 app.post("/urls/:id/delete", (req, res) => {
   const id = req.params.id;
+  const userID = req.session.user_id;
+
+  if (!urlDatabase[id]) {
+    return res.status(404).send("Error: URL not found.");
+  }
+
+  if (!userID) {
+    return res.status(403).send("Error: You must log in to delete this URL.");
+  }
+
+  if (urlDatabase[id].userID !== userID) {
+    return res
+      .status(403)
+      .send("Error: You do not have permission to delete this URL.");
+  }
+
   delete urlDatabase[id];
   res.redirect("/urls");
 });
 
+
 /// GET route to handle login
 app.get("/login", (req, res) => {
   const userID = req.session.user_id;
-  if (userID) {
-    return res.redirect("/urls"); // Redirect logged-in users to /urls
-  }
-  const user = users[userID]; 
-  const templateVars = { user }; 
-  res.render("login", templateVars); 
-});
 
+  // Redirect to /urls if user is already logged in
+  if (userID) {
+    return res.redirect("/urls");
+  }
+
+  const templateVars = { user: null }; // Pass null if no user is logged in
+  res.render("login", templateVars);
+});
 // POST route to handle login and set a user cookie
 app.post("/login", (req, res) => {
   const { email, password } = req.body;
+
+  // Find user by email
   const user = getUserByEmail(email, users);
 
+  // Handle invalid email
   if (!user) {
     return res.status(403).send("Error: Email not found.");
   }
 
-   // Check if the password matches the stored hashed password
-   if (!bcrypt.compareSync(password, user.password)) {
+  // Handle invalid password
+  if (!bcrypt.compareSync(password, user.password)) {
     return res.status(403).send("Error: Incorrect password.");
   }
 
+  // Set session and redirect
   req.session.user_id = user.id;
   res.redirect("/urls");
 });
+
 
 /// POST route logout 
 app.post("/logout", (req, res) => {
@@ -176,11 +223,13 @@ app.post("/logout", (req, res) => {
 // Registration page
 app.get("/register", (req, res) => {
   const userID = req.session.user_id;
+
+  // Redirect to /urls if user is already logged in
   if (userID) {
-    return res.redirect("/urls"); // Redirect logged-in users to /urls
+    return res.redirect("/urls");
   }
-  const user = users[userID];
-  const templateVars = { user };
+
+  const templateVars = { user: null }; // Pass null if no user is logged in
   res.render("register", templateVars);
 });
 
@@ -193,29 +242,34 @@ app.post("/register", (req, res) => {
     return res.status(400).send("Error: Email and password cannot be empty.");
   }
 
-  // Check for duplicate email
+  // Check if email is already registered
   if (getUserByEmail(email, users)) {
     return res.status(400).send("Error: Email already registered.");
   }
 
-   // Generate a hashed password
-   const hashedPassword = bcrypt.hashSync(password, 12); 
-
-  // Generate a new user ID and add user to the database
+  // Hash password and add user
+  const hashedPassword = bcrypt.hashSync(password, 12);
   const id = generateRandomString();
   users[id] = { id, email, password: hashedPassword };
 
+  // Log the updated users object for debugging
+  console.log("Updated users object:", users);
 
-  // Set user_id cookie and redirect
+  // Set user_id session and redirect to /urls
   req.session.user_id = id;
   res.redirect("/urls");
 });
 
 
+//database
 const urlDatabase = {
-  userRandomID: {
-    b2xVn2: "http://www.lighthouselabs.ca",
-    "9sm5xK": "http://www.google.com",
+  b6UTxQ: {
+    longURL: "https://www.tsn.ca",
+    userID: "aJ48lW",
+  },
+  i3BoGr: {
+    longURL: "https://www.google.ca",
+    userID: "aJ48lW",
   },
 };
 

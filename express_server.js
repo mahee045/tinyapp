@@ -12,6 +12,7 @@ const { urlsForUser } = require("./helpers");
 // cookie session
 const cookieSession = require("cookie-session");
 
+
 app.use(
   cookieSession({
     name: "session",
@@ -71,30 +72,13 @@ app.get("/urls", (req, res) => {
   res.render("urls_index", templateVars);
 });
 
-//route url show handler
-app.post("/urls/:id", (req, res) => {
-  const id = req.params.id;
-  const userID = req.session.user_id;
+//database
+const urlDatabase = {
+  b6UTxQ: { longURL: "https://www.tsn.ca", userID: "user1" },
+  c2xBmQ: { longURL: "https://www.example.com", userID: "user1" },
+  i3BoGr: { longURL: "https://www.google.ca", userID: "user2" },
+};
 
-  if (!urlDatabase[id]) {
-    return res.status(404).send("Error: URL not found.");
-  }
-
-  if (!userID) {
-    return res.status(403).send("Error: You must log in to edit this URL.");
-  }
-
-  if (urlDatabase[id].userID !== userID) {
-    return res
-      .status(403)
-      .send("Error: You do not have permission to edit this URL.");
-  }
-
-  urlDatabase[id].longURL = req.body.longURL;
-  res.redirect("/urls");
-});
-
-//viewing permission, and ownership
 app.get("/urls/:id", (req, res) => {
   const userID = req.session.user_id;
 
@@ -122,6 +106,50 @@ app.get("/urls/:id", (req, res) => {
   };
 
   res.render("urls_show", templateVars);
+});
+
+//route url show handler
+app.post("/urls/:id", (req, res) => {
+  const id = req.params.id;
+  const userID = req.session.user_id;
+
+  if (!urlDatabase[id]) {
+    return res.status(404).send("Error: URL not found.");
+  }
+
+  if (!userID) {
+    return res.status(403).send("Error: You must log in to edit this URL.");
+  }
+
+  if (urlDatabase[id].userID !== userID) {
+    return res
+      .status(403)
+      .send("Error: You do not have permission to edit this URL.");
+  }
+
+  urlDatabase[id].longURL = req.body.longURL;
+  res.redirect("/urls");
+});
+
+//viewing permission, and ownership
+app.post("/urls/:id/delete", (req, res) => {
+  const id = req.params.id;
+  const userID = req.session.user_id;
+
+  if (!userID) {
+    return res.status(403).send("Error: You must log in to delete this URL.");
+  }
+
+  if (!urlDatabase[id]) {
+    return res.status(404).send("Error: URL not found.");
+  }
+
+  if (urlDatabase[id].userID !== userID) {
+    return res.status(403).send("Error: You do not have permission to delete this URL.");
+  }
+
+  delete urlDatabase[id];
+  res.redirect("/urls");
 });
 
 
@@ -155,28 +183,6 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/${shortURL}`);
 });
 
-// POST route to delete a URL resource
-app.post("/urls/:id/delete", (req, res) => {
-  const id = req.params.id;
-  const userID = req.session.user_id;
-
-  if (!urlDatabase[id]) {
-    return res.status(404).send("Error: URL not found.");
-  }
-
-  if (!userID) {
-    return res.status(403).send("Error: You must log in to delete this URL.");
-  }
-
-  if (urlDatabase[id].userID !== userID) {
-    return res
-      .status(403)
-      .send("Error: You do not have permission to delete this URL.");
-  }
-
-  delete urlDatabase[id];
-  res.redirect("/urls");
-});
 
 
 /// GET route to handle login
@@ -191,6 +197,7 @@ app.get("/login", (req, res) => {
   const templateVars = { user: null }; // Pass null if no user is logged in
   res.render("login", templateVars);
 });
+
 // POST route to handle login and set a user cookie
 app.post("/login", (req, res) => {
   const { email, password } = req.body;
@@ -252,26 +259,10 @@ app.post("/register", (req, res) => {
   const id = generateRandomString();
   users[id] = { id, email, password: hashedPassword };
 
-  // Log the updated users object for debugging
-  console.log("Updated users object:", users);
-
   // Set user_id session and redirect to /urls
   req.session.user_id = id;
   res.redirect("/urls");
 });
-
-
-//database
-const urlDatabase = {
-  b6UTxQ: {
-    longURL: "https://www.tsn.ca",
-    userID: "aJ48lW",
-  },
-  i3BoGr: {
-    longURL: "https://www.google.ca",
-    userID: "aJ48lW",
-  },
-};
 
 app.get("/", (req, res) => {
   res.send("Hello!");

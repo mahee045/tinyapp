@@ -8,8 +8,7 @@ const getUserByEmail = function (email, database) {
   return null; // Return null if no user is found
 };
 
-
-///url filtering\
+// URL filtering
 const urlsForUser = (id, urlDatabase) => {
   const userURLs = {};
   for (const shortURL in urlDatabase) {

@@ -6,8 +6,7 @@ const PORT = 8080; // default port 8080
 app.set("view engine", "ejs") 
 
 ///helper function
-const { getUserByEmail } = require("./helpers");
-const { urlsForUser } = require("./helpers");
+const { getUserByEmail, urlsForUser } = require("./helpers");
 
 // cookie session
 const cookieSession = require("cookie-session");
@@ -264,8 +263,13 @@ app.post("/register", (req, res) => {
   res.redirect("/urls");
 });
 
+///redirecting to the login page 
 app.get("/", (req, res) => {
-  res.send("Hello!");
+  const userID = req.session.user_id;
+  if (userID) {
+    return res.redirect("/urls");
+  }
+  res.redirect("/login");
 });
 
 app.listen(PORT, () => {
